@@ -43,12 +43,21 @@ app.post("/send-whatsapp", async (req, res) => {
             await client.messages.create({
                 from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
                 to: `whatsapp:${c.phone}`,
-                body: message
+                body: message,
+                statusCallback: `${process.env.BASE_URL}/twilio-status`
             });
         } catch (err) {
             console.error("Error enviando a", c.phone, err.message);
         }
     });
+});
+
+app.post("/twilio-status", express.urlencoded({ extended: false }), (req, res) => {
+    const { MessageSid, MessageStatus, To } = req.body;
+
+    console.log("Webhook Twilio:", MessageSid, MessageStatus, To);
+
+    res.sendStatus(200);
 });
 
 app.listen(process.env.PORT || 3000, () =>
