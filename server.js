@@ -17,7 +17,7 @@ const client = twilio(
 // PLANTILLA EMPRESARIAL (SIMULACIÓN REAL)
 function buildBusinessMessage({ name, message }) {
     return `
-IPS – Innovación en Seguridad Patrimonial 🛡️
+IPS –  INGENIERIA, PROYECTOS Y SEGURIDAD GLOBAL SAC 🛡️
 
 Hola ${name} 👋
 ${message}
