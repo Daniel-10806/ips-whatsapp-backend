@@ -30,9 +30,8 @@ Equipo IPS
 
 app.post("/send-whatsapp", async (req, res) => {
     const { message, phones } = req.body;
-    const results = [];
 
-    for (const c of phones) {
+    const tasks = phones.map(async c => {
         try {
             await client.messages.create({
                 from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
@@ -40,22 +39,23 @@ app.post("/send-whatsapp", async (req, res) => {
                 body: buildBusinessMessage({ name: c.name, message })
             });
 
-            results.push({
+            return {
                 name: c.name,
                 phone: c.phone,
                 status: "enviado",
                 date: new Date().toISOString()
-            });
+            };
         } catch {
-            results.push({
+            return {
                 name: c.name,
                 phone: c.phone,
                 status: "error",
                 date: new Date().toISOString()
-            });
+            };
         }
-    }
+    });
 
+    const results = await Promise.all(tasks);
     res.json({ success: true, results });
 });
 
