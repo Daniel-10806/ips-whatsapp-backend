@@ -16,20 +16,18 @@ const client = twilio(
 
 function buildBusinessMessage({ name, message }) {
     return `
-IPS – INGENIERIA, PROYECTOS Y SEGURIDAD GLOBAL SAC 🛡️
 
 Hola ${name} 👋
 ${message}
-
-📌 Plataforma iCUR@
-Gestión de accesos e incidencias.
-
-Equipo IPS
 `;
 }
 
 app.post("/send-whatsapp", async (req, res) => {
     const { message, phones } = req.body;
+
+    if (!message || !phones?.length) {
+        return res.status(400).json({ success: false, results: [] });
+    }
 
     const tasks = phones.map(async c => {
         try {
@@ -59,4 +57,6 @@ app.post("/send-whatsapp", async (req, res) => {
     res.json({ success: true, results });
 });
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000, () =>
+    console.log("Backend IPS WhatsApp activo")
+);
