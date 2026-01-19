@@ -37,8 +37,10 @@ app.post("/send-whatsapp", async (req, res) => {
         return res.status(400).json({ error: "Datos incompletos" });
     }
 
-    try {
-        for (const contact of phones) {
+    const results = [];
+
+    for (const contact of phones) {
+        try {
             const finalMessage = buildBusinessMessage({
                 name: contact.name,
                 message
@@ -49,13 +51,14 @@ app.post("/send-whatsapp", async (req, res) => {
                 to: `whatsapp:${contact.phone}`,
                 body: finalMessage
             });
-        }
 
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error enviando WhatsApp" });
+            results.push({ name: contact.name, status: "enviado" });
+        } catch (err) {
+            results.push({ name: contact.name, status: "error" });
+        }
     }
+
+    res.json({ success: true, results });
 });
 
 const PORT = process.env.PORT || 3000;
