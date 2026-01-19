@@ -14,6 +14,22 @@ const client = twilio(
     process.env.TWILIO_AUTH_TOKEN
 );
 
+// PLANTILLA EMPRESARIAL (SIMULACIÓN REAL)
+function buildBusinessMessage({ name, message }) {
+    return `
+IPS – Innovación en Seguridad Patrimonial 🛡️
+
+Hola ${name} 👋
+${message}
+
+📌 Plataforma iCUR@
+Gestión de accesos, incidencias y seguridad patrimonial.
+
+Quedamos atentos a tu respuesta.
+Equipo IPS
+`;
+}
+
 app.post("/send-whatsapp", async (req, res) => {
     const { message, phones } = req.body;
 
@@ -22,11 +38,16 @@ app.post("/send-whatsapp", async (req, res) => {
     }
 
     try {
-        for (const phone of phones) {
+        for (const contact of phones) {
+            const finalMessage = buildBusinessMessage({
+                name: contact.name,
+                message
+            });
+
             await client.messages.create({
                 from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
-                to: `whatsapp:${phone}`,
-                body: message
+                to: `whatsapp:${contact.phone}`,
+                body: finalMessage
             });
         }
 
