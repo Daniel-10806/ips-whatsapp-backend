@@ -17,7 +17,6 @@ const client = twilio(
 function buildBusinessMessage({ name, message }) {
     return `
 
-Hola ${name} 👋
 ${message}
 `;
 }
