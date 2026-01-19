@@ -25,35 +25,30 @@ app.post("/send-whatsapp", async (req, res) => {
     const { message, phones } = req.body;
 
     if (!message || !phones?.length) {
-        return res.status(400).json({ success: false, results: [] });
+        return res.status(400).json({ success: false });
     }
 
-    const tasks = phones.map(async c => {
+    res.json({
+        success: true,
+        accepted: phones.map(c => ({
+            name: c.name,
+            phone: c.phone,
+            status: "enviado",
+            date: new Date().toISOString()
+        }))
+    });
+
+    phones.forEach(async c => {
         try {
             await client.messages.create({
                 from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
                 to: `whatsapp:${c.phone}`,
-                body: buildBusinessMessage({ name: c.name, message })
+                body: message
             });
-
-            return {
-                name: c.name,
-                phone: c.phone,
-                status: "enviado",
-                date: new Date().toISOString()
-            };
-        } catch {
-            return {
-                name: c.name,
-                phone: c.phone,
-                status: "error",
-                date: new Date().toISOString()
-            };
+        } catch (err) {
+            console.error("Error enviando a", c.phone, err.message);
         }
     });
-
-    const results = await Promise.all(tasks);
-    res.json({ success: true, results });
 });
 
 app.listen(process.env.PORT || 3000, () =>
