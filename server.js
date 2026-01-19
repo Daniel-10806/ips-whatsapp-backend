@@ -14,63 +14,52 @@ const client = twilio(
     process.env.TWILIO_AUTH_TOKEN
 );
 
+function buildBusinessMessage({ name, message }) {
+    return `
+
+${message}
+`;
+}
+
 app.post("/send-whatsapp", async (req, res) => {
     const { message, phones } = req.body;
 
-    if (!message || !phones || phones.length === 0) {
-        return res.status(400).json({
-            success: false,
-            error: "Mensaje o teléfonos inválidos"
-        });
+    if (!message || !phones?.length) {
+        return res.status(400).json({ success: false });
     }
 
-    const results = [];
+    res.json({
+        success: true,
+        accepted: phones.map(c => ({
+            name: c.name,
+            phone: c.phone,
+            status: "enviado",
+            date: new Date().toISOString()
+        }))
+    });
 
-    for (const c of phones) {
+    phones.forEach(async c => {
         try {
-            const twilioMsg = await client.messages.create({
+            await client.messages.create({
                 from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
                 to: `whatsapp:${c.phone}`,
                 body: message,
                 statusCallback: `${process.env.BASE_URL}/twilio-status`
             });
-
-            results.push({
-                name: c.name,
-                phone: c.phone,
-                status: "enviado",
-                sid: twilioMsg.sid,
-                date: new Date().toISOString()
-            });
-
         } catch (err) {
-            console.error("❌ Error Twilio:", err.message);
-
-            results.push({
-                name: c.name,
-                phone: c.phone,
-                status: "fallido",
-                error: err.message,
-                date: new Date().toISOString()
-            });
+            console.error("Error enviando a", c.phone, err.message);
         }
-    }
-
-    return res.json({
-        success: true,
-        accepted: results
     });
 });
 
-app.post(
-    "/twilio-status",
-    express.urlencoded({ extended: false }),
-    (req, res) => {
-        console.log("📡 Webhook Twilio:", req.body);
-        res.sendStatus(200);
-    }
-);
+app.post("/twilio-status", express.urlencoded({ extended: false }), (req, res) => {
+    const { MessageSid, MessageStatus, To } = req.body;
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("✅ Backend IPS WhatsApp activo");
+    console.log("Webhook Twilio:", MessageSid, MessageStatus, To);
+
+    res.sendStatus(200);
 });
+
+app.listen(process.env.PORT || 3000, () =>
+    console.log("Backend IPS WhatsApp activo")
+);
